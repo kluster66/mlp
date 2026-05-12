@@ -79,8 +79,8 @@ Returns nothing. Side effect: `#statsGrid` innerHTML updated.
 Draws on `<canvas id="lossChart">` using the Canvas 2D API:
 - Handles DPR (Device Pixel Ratio) manually for Retina displays
 - Computes min/max ranges for the X axis (iterations) and Y axis (loss)
-- Draws a horizontal grid with Y labels, and evenly spaced X labels
-- Draws two curves via the internal `drawLine()` helper: train (purple) and val (pink), with dots if fewer than 20 points
+- Draws a horizontal grid with Y labels, and evenly spaced X labels (max 6)
+- Draws two curves via the internal `drawLine()` helper: train (purple) and val (pink), with individual dots if fewer than 20 points
 - Adds a dashed vertical line at `bestVal`
 - If `overfitStart`: yellow circle + `↑ overfit (iter)` label
 - If `overfitMax ≠ overfitStart`: red circle + dashed vertical line + `⚠ seuil (iter)` label
@@ -88,6 +88,22 @@ Draws on `<canvas id="lossChart">` using the Canvas 2D API:
 
 ### Out
 Returns nothing. Side effects: canvas redrawn, legend element visibility updated.
+
+---
+
+## `drawLine(points, color)` *(internal to `renderChart`)*
+
+### In
+| Parameter | Type | Description |
+|---|---|---|
+| `points` | `{iter, loss}[]` | Series of points to plot |
+| `color` | `string` | CSS color for the line and dots |
+
+### Transform
+Traces a `lineTo` path on the parent canvas context (`ctx`). If the series has fewer than 20 points, draws a circle of radius 3.5 px at each coordinate to make individual points visible.
+
+### Out
+Returns nothing. Side effect: drawing on the canvas inherited from `renderChart`.
 
 ---
 
@@ -110,12 +126,12 @@ Computes a reliability score based on the number of validation points (`n`):
 - Computes the absolute and relative gap between final and minimum val loss
 - Computes overfit duration (in iters) and its percentage of the total run
 - Computes the train/val generalisation gap
-- Builds an HTML string with metrics and recommendations (checkpoint to use, dataset size, hyperparameters)
+- Builds an HTML string with metrics and actionable recommendations (checkpoint to use, dataset size, hyperparameters to adjust)
 
 **No overfit branch**:
 - Analyses the trend over the last 2 val loss points
 - Analyses convergence over the last 20% of train loss points
-- Builds forward-looking recommendations (continue training, increase dataset size, etc.)
+- Builds forward-looking recommendations (continue training, increase dataset, etc.)
 
 ### Out
 Returns nothing. Side effects: `#verdictIcon` and `#verdictText` updated in the DOM.
@@ -161,7 +177,7 @@ Calls `buildIterRows()` to get the rows to display. For each iteration, determin
 - `badge-overfit-start` + "↑ val loss remonte" if `iter === overfitStart.iter`
 - `badge-overfit-max` + "⚠ seuil 1% franchi" if `iter === overfitMax.iter` and `overfitMax ≠ overfitStart`
 
-Applies the `best-row` class to the best checkpoint `<tr>`. Formats numeric values to 3 decimal places, displays `—` when data is missing.
+Applies the `best-row` CSS class to the best checkpoint `<tr>`. Formats numeric values to 3 decimal places, displays `—` when data is missing.
 
 ### Out
 Returns nothing. Side effect: `#tableBody` innerHTML updated.
@@ -244,7 +260,7 @@ No parameters.
 Clears the `#logInput` textarea, hides the `#results` section, and hides `#errorMsg`.
 
 ### Out
-Returns nothing. Side effect: full UI reset.
+Returns nothing. Side effect: full UI reset to initial state.
 
 ---
 
