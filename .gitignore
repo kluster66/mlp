@@ -13,3 +13,30 @@
 
 # Claude Code
 .claude/
+
+# General
+.env
+.env.*
+*.local
+*.log
+tmp/
+temp/
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Node / JS / TS
+node_modules/
+.next/
+.nuxt/
+*.tsbuildinfo

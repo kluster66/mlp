@@ -1,4 +1,4 @@
-# Documentation des fonctions — MLX Log Parser
+# Référence des fonctions — MLX Log Parser
 
 ---
 
@@ -60,7 +60,7 @@ Construit un tableau de 6 descripteurs (`label`, `value`, `cls`) correspondant a
 Génère le HTML des cartes `.stat-card` et l'injecte dans `#statsGrid`.
 
 ### Out
-Ne renvoie rien. Effet de bord : innerHTML de `#statsGrid` mis à jour.
+Ne renvoie rien. Effet de bord : `innerHTML` de `#statsGrid` mis à jour.
 
 ---
 
@@ -78,9 +78,9 @@ Ne renvoie rien. Effet de bord : innerHTML de `#statsGrid` mis à jour.
 ### Transform
 Dessine sur le `<canvas id="lossChart">` avec l'API Canvas 2D :
 - Gère le DPR (Device Pixel Ratio) manuellement pour les écrans Retina
-- Calcule les plages min/max des axes X (iterations) et Y (loss)
-- Dessine une grille horizontale avec labels Y, et des labels X espacés uniformément
-- Dessine deux courbes via la sous-fonction interne `drawLine()` : train (violet) et val (rose), avec des points si < 20 valeurs
+- Calcule les plages min/max des axes X (itérations) et Y (loss)
+- Dessine une grille horizontale avec labels Y, et des labels X espacés uniformément (max 6)
+- Dessine deux courbes via la sous-fonction interne `drawLine()` : train (violet) et val (rose), avec des points si la série contient moins de 20 valeurs
 - Ajoute une ligne verticale pointillée au `bestVal`
 - Si `overfitStart` : cercle jaune + label `↑ overfit (iter)`
 - Si `overfitMax ≠ overfitStart` : cercle rouge + ligne verticale pointillée + label `⚠ seuil (iter)`
@@ -88,6 +88,22 @@ Dessine sur le `<canvas id="lossChart">` avec l'API Canvas 2D :
 
 ### Out
 Ne renvoie rien. Effets de bord : canvas redessiné, visibilité des éléments de légende mise à jour.
+
+---
+
+## `drawLine(points, color)` *(interne à `renderChart`)*
+
+### In
+| Paramètre | Type | Description |
+|---|---|---|
+| `points` | `{iter, loss}[]` | Série de points à tracer |
+| `color` | `string` | Couleur CSS de la ligne |
+
+### Transform
+Trace un chemin `lineTo` sur le contexte canvas parent (`ctx`). Si la série contient moins de 20 points, ajoute un cercle de rayon 3,5 px à chaque coordonnée pour les rendre individuellement visibles.
+
+### Out
+Ne renvoie rien. Effet de bord : tracé sur le canvas hérité de `renderChart`.
 
 ---
 
@@ -108,14 +124,14 @@ Calcule un score de fiabilité selon le nombre de points de validation (`n`) :
 
 **Branche overfit détecté** (`overfitStart` non null) :
 - Calcule l'écart absolu et relatif entre val loss finale et minimale
-- Calcule la durée d'overfit (en iters) et son pourcentage du run
+- Calcule la durée d'overfit en itérations et son pourcentage du run
 - Calcule le gap de généralisation train/val
 - Compose un texte HTML avec métriques chiffrées et recommandations (checkpoint à utiliser, taille du dataset, hyperparamètres)
 
 **Branche pas d'overfit** :
 - Analyse la tendance sur les 2 derniers points de val loss
 - Analyse la convergence sur les 20 derniers % de train loss
-- Compose des recommandations forward-looking (continuer l'entraînement, augmenter le dataset, etc.)
+- Compose des recommandations prospectives (continuer l'entraînement, augmenter le dataset, etc.)
 
 ### Out
 Ne renvoie rien. Effets de bord : `#verdictIcon` et `#verdictText` mis à jour dans le DOM.
@@ -131,7 +147,7 @@ Ne renvoie rien. Effets de bord : `#verdictIcon` et `#verdictText` mis à jour d
 | `valPoints` | `{iter, loss}[]` | Série val loss |
 
 ### Transform
-Fusionne les deux séries dans une `Map<iter → {train?, val?}>`. Applique ensuite un filtre de sélection des lignes à afficher :
+Fusionne les deux séries dans une `Map<iter → {train?, val?}>`. Applique ensuite un filtre de sélection :
 - Toutes les itérations où une val loss existe
 - La première et la dernière itération de train (pour encadrer le run)
 
@@ -139,7 +155,7 @@ Trie les itérations retenues par ordre croissant.
 
 ### Out
 Retourne `{ iters: Map, sorted: number[] }` :
-- `iters` : la Map complète iter → `{train?, val?}`
+- `iters` : la Map complète `iter → {train?, val?}`
 - `sorted` : le tableau filtré et trié des itérations à afficher
 
 ---
@@ -157,14 +173,14 @@ Retourne `{ iters: Map, sorted: number[] }` :
 
 ### Transform
 Appelle `buildIterRows()` pour obtenir les lignes à afficher. Pour chaque itération, détermine les badges et le texte de statut applicables :
-- `badge-best` + texte "← checkpoint recommandé" si `iter === bestVal.iter`
-- `badge-overfit-start` + texte "↑ val loss remonte" si `iter === overfitStart.iter`
-- `badge-overfit-max` + texte "⚠ seuil 1% franchi" si `iter === overfitMax.iter` et `overfitMax ≠ overfitStart`
+- `badge-best` + "← checkpoint recommandé" si `iter === bestVal.iter`
+- `badge-overfit-start` + "↑ val loss remonte" si `iter === overfitStart.iter`
+- `badge-overfit-max` + "⚠ seuil 1% franchi" si `iter === overfitMax.iter` et `overfitMax ≠ overfitStart`
 
 Applique la classe `best-row` sur le `<tr>` du meilleur checkpoint. Formate les valeurs numériques à 3 décimales, affiche `—` si la donnée est absente.
 
 ### Out
-Ne renvoie rien. Effet de bord : innerHTML de `#tableBody` mis à jour.
+Ne renvoie rien. Effet de bord : `innerHTML` de `#tableBody` mis à jour.
 
 ---
 
@@ -179,10 +195,10 @@ Ne renvoie rien. Effet de bord : innerHTML de `#tableBody` mis à jour.
 | `overfitStart` | `{iter, loss}` \| `null` | Début overfit |
 
 ### Transform
-Appelle `buildIterRows()` pour obtenir les mêmes lignes que le tableau HTML. Construit une string Markdown avec en-tête de tableau GFM (`| Itération | Train loss | Val loss |`). Pour chaque ligne, ajoute un suffixe textuel dans la colonne val loss : ` ← meilleur checkpoint` ou ` ← début overfit` selon le cas.
+Appelle `buildIterRows()` pour obtenir les mêmes lignes que le tableau HTML. Construit une chaîne Markdown avec en-tête de tableau GFM (`| Itération | Train loss | Val loss |`). Ajoute un suffixe dans la colonne val loss : ` ← meilleur checkpoint` ou ` ← début overfit` selon le cas.
 
 ### Out
-Ne renvoie rien. Effet de bord : `textContent` de `#markdownOut` mis à jour avec la string Markdown.
+Ne renvoie rien. Effet de bord : `textContent` de `#markdownOut` mis à jour avec la chaîne Markdown.
 
 ---
 
@@ -195,10 +211,10 @@ Aucun paramètre. Lit l'état courant du DOM : canvas, verdict, tableau, cartes 
 Capture les données affichées :
 - Chart encodé en base64 via `canvas.toDataURL('image/png')`
 - Icône et HTML du verdict
-- innerHTML du `<tbody>` du tableau
+- `innerHTML` du `<tbody>` du tableau
 - Labels, valeurs et classes CSS de chaque `.stat-card`
 
-Construit un document HTML autonome complet avec CSS inline (copie minifiée du CSS principal), les données capturées, et un footer horodaté. Crée un `Blob`, génère une URL temporaire via `URL.createObjectURL`, déclenche un téléchargement nommé `mlx-report-YYYY-MM-DD.html`, puis révoque l'URL.
+Construit un document HTML autonome avec CSS inline (copie minifiée du CSS principal), les données capturées et un footer horodaté. Crée un `Blob`, génère une URL temporaire via `URL.createObjectURL`, déclenche un téléchargement nommé `mlx-report-YYYY-MM-DD.html`, puis révoque l'URL.
 
 ### Out
 Ne renvoie rien. Effet de bord : téléchargement d'un fichier `.html` autonome déclenché dans le navigateur.
@@ -213,7 +229,7 @@ Ne renvoie rien. Effet de bord : téléchargement d'un fichier `.html` autonome 
 | `e` | `Event` | Événement click du bouton "Copier le Markdown" |
 
 ### Transform
-Lit le `textContent` de `#markdownOut` et le copie dans le presse-papiers via `navigator.clipboard.writeText()`. En cas de succès, change temporairement le label du bouton en "✓ Copié !" pendant 1,5 secondes puis le restaure.
+Lit le `textContent` de `#markdownOut` et le copie dans le presse-papiers via `navigator.clipboard.writeText()`. Change temporairement le label du bouton en "✓ Copié !" pendant 1,5 secondes puis le restaure.
 
 ### Out
 Ne renvoie rien. Effets de bord : presse-papiers mis à jour, label du bouton modifié temporairement.
@@ -231,7 +247,7 @@ Ne renvoie rien. Effets de bord : presse-papiers mis à jour, label du bouton mo
 Écrit `msg` dans le `textContent` de `#errorMsg` et rend l'élément visible (`display: block`).
 
 ### Out
-Ne renvoie rien. Effet de bord : div `#errorMsg` rendue visible avec le message.
+Ne renvoie rien. Effet de bord : `div#errorMsg` rendue visible avec le message.
 
 ---
 

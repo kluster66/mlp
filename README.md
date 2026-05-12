@@ -1,20 +1,38 @@
 # MLX Log Parser
 
-Visualisation and analysis tool for `mlx_lm.lora` training logs. Single HTML file, no dependencies, no server required.
+Outil de visualisation et d'analyse des logs d'entraînement `mlx_lm.lora`. Fichier HTML autonome, aucune dépendance, aucun serveur requis — ouvrir directement dans un navigateur.
 
-| File | Language |
+| Fichier | Langue |
 |---|---|
 | `mlx_log_parser.html` | Français |
 | `mlx_log_parser_en.html` | English |
 
-## Usage
+## Architecture
 
-1. Open either HTML file in a browser
-2. Paste your MLX training log content
-3. Click **Analyze** / **Analyser**
+Tout réside dans un seul fichier HTML :
 
-## Expected log format
+| Composant | Rôle |
+|---|---|
+| `mlx_log_parser.html` | Interface principale en français : CSS, HTML, JavaScript vanilla dans un seul fichier |
+| `mlx_log_parser_en.html` | Version anglaise du même outil |
 
+Le pipeline JS est : `parseLogs()` → `renderResults()` → `renderStats()` + `renderChart()` + `renderVerdict()` + `renderTable()` + `renderMarkdown()`.
+
+## Prérequis
+
+Aucun. Un navigateur moderne suffit (Chrome, Firefox, Safari, Edge).
+
+## Installation
+
+Aucune installation. Télécharger ou cloner le dépôt, puis ouvrir `mlx_log_parser.html` dans un navigateur.
+
+## Utilisation
+
+1. Ouvrir `mlx_log_parser.html` dans un navigateur
+2. Coller le contenu d'une log `mlx_lm.lora` dans la zone de texte
+3. Cliquer **Analyser**
+
+Format de log attendu :
 ```
 Iter 1: Val loss 2.742, Val took 1.153s
 Iter 10: Train loss 2.068, Learning Rate 1.000e-05, It/sec 1.809, Tokens/sec 484.562
@@ -22,24 +40,31 @@ Iter 100: Val loss 0.759, Val took 0.325s
 ...
 ```
 
-Unrecognised lines are ignored — you can paste the raw log as-is.
+Les lignes non reconnues sont ignorées — coller la log brute telle quelle.
 
-## Output
+## Résultats produits
 
-- **Statistics**: initial val loss, best val loss, best checkpoint, final train loss, overfit start iteration
-- **Chart**: train loss + val loss curve with two overfit markers (see below)
-- **Verdict**: analysis with raw metrics (absolute and relative gap, proportion of iterations in overfit, train/val generalisation gap) and a reliability score based on the number of validation points
-- **Table**: measurements at validation checkpoints with best / overfit-start / 1%-threshold badges
-- **Markdown export**: Markdown table ready to paste into Obsidian
-- **HTML export**: self-contained downloadable report (chart embedded as base64)
+- **Statistiques** : val loss initiale, meilleure val loss, meilleur checkpoint, train loss finale, itération de début d'overfit
+- **Graphique** : courbes train loss + val loss avec deux marqueurs d'overfit
+- **Verdict** : analyse avec métriques chiffrées (écart absolu et relatif, proportion des itérations en overfit, gap de généralisation train/val) et un score de fiabilité selon le nombre de points de validation
+- **Tableau** : mesures aux checkpoints de validation avec badges meilleur / overfit-start / seuil 1%
+- **Export Markdown** : tableau Markdown prêt à coller dans Obsidian
+- **Export HTML** : rapport autonome téléchargeable (graphique embarqué en base64)
 
-## Overfitting detection
+## Détection de l'overfitting
 
-Two distinct thresholds are shown on the chart and in the verdict:
+Deux seuils distincts sont affichés sur le graphique et dans le verdict :
 
-- **Overfit start** (yellow dot): first validation point after the minimum where val loss ticks up, even slightly. This is where the model starts memorising instead of generalising — the real early signal.
-- **1% threshold** (red dot): first consecutive jump >1% between two validation points. Marks when the degradation becomes significant.
+- **Début overfit** (point jaune) : premier point de validation après le minimum où la val loss remonte, même légèrement.
+- **Seuil 1%** (point rouge) : premier saut consécutif >1% entre deux points de validation consécutifs.
 
-The **recommended checkpoint** is always the iteration with the absolute minimum val loss, regardless of the thresholds.
+Le **checkpoint recommandé** est toujours l'itération avec la val loss absolument minimale.
 
-**Detection reliability** depends on the number of validation points in the log (`--steps-per-eval`): low with 2–3 points, high with 7+.
+La **fiabilité de la détection** dépend du nombre de points de validation dans la log (`--steps-per-eval`) : faible avec 2–3 points, élevée avec 7+.
+
+## Documentation
+
+- [docs/FUNCTIONS.md](docs/FUNCTIONS.md) — référence complète de toutes les fonctions (français)
+- [docs/FLOWCHART.md](docs/FLOWCHART.md) — diagramme de flux Mermaid (français)
+- [docs/FUNCTIONS_en.md](docs/FUNCTIONS_en.md) — function reference (English)
+- [docs/FLOWCHART_en.md](docs/FLOWCHART_en.md) — flow diagram (English)
