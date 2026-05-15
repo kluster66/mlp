@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MLX Training Analytics</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <h1>MLX Training Analytics</h1>
+      <p class="subtitle">// Extraction des métriques et monitoring des performances</p>
+    </div>
+    <div class="header-badge">mlx_lm.lora</div>
+  </div>
+</header>
+
+<div class="input-section">
+
+  <label for="fileInput" id="dropzone" class="dropzone">
+    <input type="file" id="fileInput" accept=".log,.txt,text/plain">
+    <div class="dropzone-icon">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="16 16 12 12 8 16"></polyline>
+        <line x1="12" y1="12" x2="12" y2="21"></line>
+        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+      </svg>
+    </div>
+    <p class="dropzone-title">Importer un fichier de log</p>
+    <p class="dropzone-sub">Déposer un <code>.log</code> ou <code>.txt</code> ici, ou cliquer pour parcourir</p>
+    <p class="dropzone-hint">Analyse déclenchée automatiquement à l'import</p>
+    <div class="dropzone-filename" id="dropzoneFilename"></div>
+  </label>
+
+  <div class="or-divider"><span>ou coller directement</span></div>
+
+  <div class="paste-zone">
+    <span class="input-label">▸ Source de données (STDOUT / Log File)</span>
+    <textarea id="logInput" placeholder="Collez ici le contenu STDOUT ou le fichier log mlx_lm.lora...
+
+Exemple :
+Iter 1: Val loss 2.742, Val took 1.153s
+Iter 10: Train loss 2.068, Learning Rate 1.000e-05, It/sec 1.809, Tokens/sec 484.562
+Iter 100: Val loss 0.759, Val took 0.325s
+..."></textarea>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="runAnalysis()">Exécuter l'analyse</button>
+      <button class="btn-secondary" onclick="loadExample()">Charger un jeu de données test</button>
+      <button class="btn-secondary" onclick="clearAll()">Réinitialiser l'interface</button>
+    </div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+</div>
+
+<div id="results">
+
+  <div class="results-header">
+    <p class="section-title" style="margin-bottom:0">▸ Tableau de bord</p>
+    <button class="btn-secondary" onclick="exportReport()">↓ Exporter le rapport</button>
+  </div>
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <p class="section-title">▸ Courbe de loss</p>
+  <div class="chart-container">
+    <canvas id="lossChart"></canvas>
+    <div class="chart-legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#7c6bff"></div>
+        Train loss
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#ff6b9d"></div>
+        Val loss
+      </div>
+      <div class="legend-item" id="overfitStartLegend" style="display:none">
+        <div class="legend-dot" style="background:var(--yellow)"></div>
+        Début overfit
+      </div>
+      <div class="legend-item" id="overfitMaxLegend" style="display:none">
+        <div class="legend-dot" style="background:#ff6b6b"></div>
+        Seuil 1%
+      </div>
+    </div>
+  </div>
+
+  <p class="section-title">▸ Analyse d'overfitting</p>
+  <div class="verdict" id="verdictBox">
+    <div class="verdict-icon" id="verdictIcon"></div>
+    <div class="verdict-text" id="verdictText"></div>
+  </div>
+
+  <p class="section-title">▸ Journal des itérations</p>
+  <div class="table-container">
+    <table id="mainTable">
+      <thead>
+        <tr>
+          <th data-col="iter"  class="sortable">Itération <span class="sort-icon">↕</span></th>
+          <th data-col="train" class="sortable">Train Loss <span class="sort-icon">↕</span></th>
+          <th data-col="val"   class="sortable">Val Loss <span class="sort-icon">↕</span></th>
+          <th data-col="itSec" class="sortable">It/sec <span class="sort-icon">↕</span></th>
+          <th data-col="lr"    class="sortable">Learning Rate <span class="sort-icon">↕</span></th>
+          <th>Statut</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <p class="section-title">▸ Export Markdown (Obsidian)</p>
+  <div class="markdown-out" id="markdownOut"></div>
+  <button class="btn-primary copy-btn" onclick="copyMarkdown(event)">Copier le Markdown</button>
+
+</div>
+
+<p class="footer">MLX Training Analytics</p>
+
+<script src="parser.js"></script>
+</body>
+</html>
